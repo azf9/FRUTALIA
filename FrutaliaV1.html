@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frutalia - Pedidos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff9f2;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1, h2 {
+      color: #e67e22;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #e67e22;
+      color: white;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #d35400;
+    }
+
+    .oculto {
+      display: none;
+    }
+
+    #pedidosContenedor {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Frutalia - Pedido de Jugo</h1>
+
+    <form id="pedidoForm">
+      <label for="nombre">Nombre del cliente:</label>
+      <input type="text" id="nombre" name="Nombre de Cliente" required>
+
+      <label for="telefono">Teléfono:</label>
+      <input type="tel" id="telefono" name="Telefono" required>
+
+      <label for="sabor">Sabor del jugo:</label>
+      <select id="sabor" name="Sabor de Jugo" required>
+        <option value="Naranja">Naranja</option>
+        <option value="Mango">Mango</option>
+        <option value="Fresa">Fresa</option>
+        <option value="Piña">Piña</option>
+      </select>
+
+      <label for="tamano">Tamaño:</label>
+      <select id="tamano" name="Tamaño" required>
+        <option value="Chico">Chico</option>
+        <option value="Mediano">Mediano</option>
+        <option value="Grande">Grande</option>
+      </select>
+
+      <label for="comentarios">Comentarios adicionales:</label>
+      <textarea id="comentarios" name="Comentarios Adicionales"></textarea>
+
+      <button type="submit">Enviar Pedido</button>
+    </form>
+
+    <p id="mensajeConfirmacion" class="oculto">Tu pedido ha sido enviado con éxito, pasa a recogerlo en 10 minutos. ¡Frutalia agradece tu preferencia!</p>
+
+    <h2>Pedidos Recientes</h2>
+    <div id="pedidosContenedor"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('pedidoForm');
+    const mensaje = document.getElementById('mensajeConfirmacion');
+    const pedidosContenedor = document.getElementById('pedidosContenedor');
+
+    const appScriptURL = 'https://script.google.com/macros/s/AKfycbwuPpE_-xVLLHhBQ32_RGoCLBBJjj6z31KZB_di5v60iiQ5Ig0RG_xG77q__sh2cvNB/exec';
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const datos = new FormData(form);
+
+      fetch(appScriptURL, { method: 'POST', body: datos })
+        .then(response => {
+          if (!response.ok) throw new Error('Error al enviar');
+          mensaje.classList.remove('oculto');
+          form.reset();
+          cargarPedidos();
+        })
+        .catch(error => {
+          alert('Hubo un error al enviar tu pedido');
+          console.error('Error:', error);
+        });
+    });
+
+    function cargarPedidos() {
+      fetch(appScriptURL)
+        .then(response => response.json())
+        .then(data => {
+          pedidosContenedor.innerHTML = '';
+
+          if (!data || data.length === 0) {
+            pedidosContenedor.innerHTML = '<p>No hay pedidos aún.</p>';
+            return;
+          }
+
+          data.reverse().forEach(pedido => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <strong>${pedido["Nombre de Cliente"]}</strong> pidió un jugo de <strong>${pedido["Sabor de Jugo"]}</strong> (${pedido["Tamaño"]})<br>
+              Comentarios: ${pedido["Comentarios Adicionales"] || 'Ninguno'}<br>
+              Tel: ${pedido["Telefono"]} | ${new Date(pedido.fecha).toLocaleString()}<hr>
+            `;
+            pedidosContenedor.appendChild(div);
+          });
+        })
+        .catch(error => {
+          console.error('Error al cargar pedidos:', error);
+          pedidosContenedor.innerHTML = '<p>Error al cargar pedidos.</p>';
+        });
+    }
+
+    window.onload = cargarPedidos;
+  </script>
+</body>
+</html>
